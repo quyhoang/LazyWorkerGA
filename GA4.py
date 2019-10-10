@@ -1,17 +1,9 @@
   # -*- coding: utf-8 -*-
 """
 
-@author: leoes
-Multirobot spanning tree
-For single robot case
+@author: hideki
+Heuristic method to determine inactivity level of swarms
 
-"""
-
-  # -*- coding: utf-8 -*-
-"""
-
-@author: leoes
-This is to test new algorithm, compute coverage
 """
 
 
