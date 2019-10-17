@@ -89,6 +89,8 @@ class MoniModel(Model):
     def fitness(self): 
         for _ in range(100):
             self.step()
+        if self.abCount == 0:
+            self.abCount = 1 #avoid division by 0 error
         return self.detectedAb/self.abCount
     
     
@@ -98,7 +100,7 @@ class MoniAgent(Agent):
         self.nextPos = (0,0) # careful ----------------------------------------
         self.sensitivity = 5
         
-        self.genome = np.random.randint(1,10,10)
+        self.genome = np.ones(10)*np.random.randint(1,10)
         
         self.energy = 25 #initial energy        
         self.regionWidth = ceil(self.model.width/self.model.num_agents) #width of the region to be covered by this agent
@@ -193,9 +195,12 @@ mirrorList = [[[0 for x in range(genomeLength)]for y in range(swarmSize)] for z 
 
 for i in range(swarmPopulation):
     model = MoniModel(swarmSize,10,10)
+#    self.genome = np.ones(10)*np.random.randint(1,10)
     for agent in model.schedule.agents:
+        temp = np.random.randint(1,10)
 #        agent.genome = [random.uniform(0,10) for _ in range(genomeLength)] #float random
-        agent.genome = [random.randint(0,10) for _ in range(genomeLength)] #int random
+#        agent.genome = [random.randint(0,10) for _ in range(genomeLength)] #int random
+        agent.genome = [temp for _ in range(genomeLength)]
         
 #        print(agent.genome)
 #        print("first gen")
@@ -287,8 +292,9 @@ for i in range(generationCount):
     b = sorted(range(len(a)), key=lambda k: a[k], reverse = True)
     print(b)
 
-flat = [j for sub in mirrorList[b[0]] for j in sub]
-plt.hist(flat,bins = 10)
+    flat = [j for sub in mirrorList[b[0]] for j in sub]
+    print(flat)
+    plt.hist(flat,bins = 10)
 # =============================================================================
 # for i in range(generationCount):
 #     for j in range(swarmPopulation):
