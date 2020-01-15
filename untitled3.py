@@ -91,7 +91,8 @@ class MoniModel(Model):
             self.step()
         if self.abCount == 0:
             self.abCount = 1 #avoid division by 0 error
-        return self.detectedAb/self.abCount
+#        return self.detectedAb/self.abCount
+        return(sum(self.schedule.agents[0].genome))
     
     
 class MoniAgent(Agent):
@@ -187,10 +188,10 @@ class MoniAgent(Agent):
 
 modelList = []
 
-generationCount = 100
+generationCount = 10
 genomeLength = 10
-swarmSize = 20 #number of individuals in each swarm
-swarmPopulation = 20 #number of swarms
+swarmSize = 3 #number of individuals in each swarm
+swarmPopulation = 3 #number of swarms
 mirrorList = [[[0 for x in range(genomeLength)]for y in range(swarmSize)] for z in range(swarmPopulation)]
 
 for i in range(swarmPopulation):
@@ -269,16 +270,15 @@ for i in range(generationCount):
                 decide = random.random()
                 if decide < .45:
                     mirrorList[j][k][l] = pa
-                elif decide < .9:
+                elif decide < .9: #totally random 
                     mirrorList[j][k][l] = ma
                 else:
                     mirrorList[j][k][l] = random.randint(0,10)
 #                   mirrorList[j][k][l] = random.uniform(1,10)       
                 l += 1
-# =============================================================================
-#             print("mirror")
-#             print(mirrorList[j][k])
-# =============================================================================
+#            print("mirror")
+#            print(mirrorList[j][k])
+            
     for i1 in range(swarmPopulation):
         for agent in modelList[i1].schedule.agents:
             agent.genome = mirrorList[i1][agent.unique_id][:]
@@ -295,15 +295,15 @@ for i in range(generationCount):
 #         a[i2] = modelList[i2].fitness()
 # =============================================================================
         
-#    print(mirrorList)
-    print("a", a)
+    print("this is mirrorlist: \n\n", mirrorList)
+#    print("a", a)
 #    print(a)
     b = sorted(range(len(a)), key=lambda k: a[k], reverse = True)
     print(b)
 
 flat = [j for sub in mirrorList[b[0]] for j in sub]
 #print(flat)
-plt.hist(flat,bins = 10)
+plt.hist(flat,bins = 21)
 # =============================================================================
 # for i in range(generationCount):
 #     for j in range(swarmPopulation):
@@ -320,3 +320,5 @@ plt.hist(flat,bins = 10)
 #         a[i] = modelList[i].fitness()
 # 
 # =============================================================================
+
+#For some reason the order doesn't change at all. I need to figure it out. Maybe there is something wrong with my fitness function. When I changed it to another function, thing went well

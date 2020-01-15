@@ -21,6 +21,8 @@ from math import *
 import numpy as np
 import random
 
+random.seed(10)
+
 #random.seed(a=None, version=2)
 #random.seed(1)
 
@@ -31,7 +33,10 @@ Econsume = 2 #walking and sensing
 Eharvest = 3
 Ereport = 15
 
-EnergyAvailablePercentage = 60
+genomeLength = 5
+
+EnergyAvailablePercentage = 60 
+#Energy is available periodically
 
 
 class MoniModel(Model):
@@ -100,7 +105,8 @@ class MoniAgent(Agent):
         self.nextPos = (0,0) # careful ----------------------------------------
         self.sensitivity = 5
         
-        self.genome = np.ones(10)*np.random.randint(1,10)
+#        self.genome = np.ones(genomeLength)*np.random.randint(1,genomeLength)
+        self.genome = np.ones(genomeLength)*np.random.randint(1,10) #==============================to debug=========================================================================================================================================================================
         
         self.energy = 25 #initial energy        
         self.regionWidth = ceil(self.model.width/self.model.num_agents) #width of the region to be covered by this agent
@@ -160,7 +166,7 @@ class MoniAgent(Agent):
              if self.sensitivity > 1:
                  self.sensitivity -= 0.1
                 
-        if (self.sensitivity > self.genome[self.model.schedule.steps%10]):    
+        if (self.sensitivity > self.genome[self.model.schedule.steps%genomeLength]):    
             if random.random() > 0.8: #probability to encounter an abnormality
                 self.model.abCount += 1
                 if self.energy > Ereport:
@@ -187,33 +193,36 @@ class MoniAgent(Agent):
 
 modelList = []
 
-generationCount = 100
-genomeLength = 10
-swarmSize = 20 #number of individuals in each swarm
-swarmPopulation = 20 #number of swarms
+generationCount = 10
+swarmSize = 3 #number of individuals in each swarm
+swarmPopulation = 10 #number of swarms
 mirrorList = [[[0 for x in range(genomeLength)]for y in range(swarmSize)] for z in range(swarmPopulation)]
+print("mirrorList: ", mirrorList)
 
 for i in range(swarmPopulation):
     model = MoniModel(swarmSize,10,10)
 #    self.genome = np.ones(10)*np.random.randint(1,10)
     for agent in model.schedule.agents:
-        temp = np.random.randint(1,10)
+#        temp = np.random.randint(1,genomeLength)  #correct version
+        temp = np.random.randint(1,10)          #debug
 #        agent.genome = [random.uniform(0,10) for _ in range(genomeLength)] #float random
 #        agent.genome = [random.randint(0,10) for _ in range(genomeLength)] #int random
-        agent.genome = [temp for _ in range(genomeLength)]
+        agent.genome = [temp for _ in range(genomeLength)] #homogeneous genome
         
 #        print(agent.genome)
 #        print("first gen")
     modelList.append(model) #there will be 5 swarms
     
+    print("swamrm num: ", i)
     for agent in model.schedule.agents:
         mirrorList[i][agent.unique_id]=agent.genome[:] #copy all the genome value into mirrorList
+        print("mirrorList: ", mirrorList)
 #        print(mirrorList[i][agent.unique_id])
     
 
 
 
-# ============================================================================= 
+# =============================================================================
 # import copy
 # modelListB = copy.deepcopy(modelList)
 # =============================================================================
@@ -233,11 +242,20 @@ b = sorted(range(len(a)), key=lambda k: a[k], reverse = True)
 
 
 for i in range(generationCount):
+#    pdb.set_trace()
+    print("Generation and MirrorList ", i, mirrorList)
     for j in range(swarmPopulation):
+        print("Swarm num:", j)
         #Pos 1: generate next gen swarm from fixed parent swarms
         x = np.random.randint(0,swarmPopulation/2+1)
+        print("x = ", x)
         y = np.random.randint(0,swarmPopulation/2+1)
+        while y == x:
+            y = np.random.randint(0,swarmPopulation/2+1)
+        print("y = ", y)
         for k in range(swarmSize): 
+            
+            print ("Individual num: ",k)
 # =============================================================================
 #             #Pos 2: generate next gen swarm from random top performed parent swarms 
 #             x = np.random.randint(0,swarmPopulation/2+1)
@@ -252,11 +270,14 @@ for i in range(generationCount):
 #             y = np.random.randint(0,swarmPopulation)
 # =============================================================================
             m = (modelList[b[x]].random.choice(modelList[b[x]].schedule.agents).genome)
+            
 # =============================================================================
 #             print("m")
 #             print(m)
 # =============================================================================
-            n = (modelList[b[y]].random.choice(modelList[b[y]].schedule.agents).genome)     
+            n = (modelList[b[y]].random.choice(modelList[b[y]].schedule.agents).genome)   
+            print("Father genome: x", m, x)
+            print("Mother genome: y",n,y)
 # =============================================================================
 #             print("n")
 #             print(n)
@@ -264,17 +285,23 @@ for i in range(generationCount):
             
             
 #            pdb.set_trace()
+            #generate one individual in the next generation
             l = 0
             for pa,ma in zip(m,n):
                 decide = random.random()
+                print ("decide var: ", decide)
                 if decide < .45:
                     mirrorList[j][k][l] = pa
-                elif decide < .9:
+                elif decide < 1:
                     mirrorList[j][k][l] = ma
                 else:
                     mirrorList[j][k][l] = random.randint(0,10)
-#                   mirrorList[j][k][l] = random.uniform(1,10)       
+#                   mirrorList[j][k][l] = random.uniform(1,10)  
                 l += 1
+                print("l = ",l)
+                print("mirrorList: ", mirrorList)
+            print("gen, swarmNum, individual num, Children genome: ", i,j,k, mirrorList[j][k])
+            print("Update mirrorList: ", mirrorList)
 # =============================================================================
 #             print("mirror")
 #             print(mirrorList[j][k])
@@ -282,27 +309,29 @@ for i in range(generationCount):
     for i1 in range(swarmPopulation):
         for agent in modelList[i1].schedule.agents:
             agent.genome = mirrorList[i1][agent.unique_id][:]
-        a[i1] = modelList[i1].fitness()
+        a[i1] = modelList[i2].fitness()
 # =============================================================================
 #             if i1 == 0 and agent.unique_id == 0:
 #                 print("agent.genome")
 #                 print(agent.genome)
 # =============================================================================
     
-# =============================================================================
-#         Debug - this is original
-#     for i2 in range(swarmPopulation):
-#         a[i2] = modelList[i2].fitness()
-# =============================================================================
+#    for i2 in range(swarmPopulation):
+#        a[i2] = modelList[i2].fitness() #debugging
         
-#    print(mirrorList)
-    print("a", a)
+    print(mirrorList)
+    mirrorList = [[[0 for x in range(genomeLength)]for y in range(swarmSize)] for z in range(swarmPopulation)] 
+    print(mirrorList)
+    #reset mirrorList
+#    print("a")
 #    print(a)
     b = sorted(range(len(a)), key=lambda k: a[k], reverse = True)
     print(b)
+    print("\n\n\n\n")
 
 flat = [j for sub in mirrorList[b[0]] for j in sub]
 #print(flat)
+
 plt.hist(flat,bins = 10)
 # =============================================================================
 # for i in range(generationCount):
